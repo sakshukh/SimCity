@@ -19,17 +19,11 @@
     <div id="root-window">
       <div id="render-target"></div>
     </div>
-    <!-- <script type="module" src="../src/scene.js"></script> -->
     <script type="module">
-      import { createScene } from "../src/scene.js";
+      import { createGame } from "../src/Game.js";
 
       window.onload = () => {
-        window.scene = createScene();
-        window.scene.start();
-
-        window.addEventListener("mousemove", window.scene.onMouseMove, false);
-        window.addEventListener("mousedown", window.scene.onMouseDown, false);
-        window.addEventListener("mouseup", window.scene.onMouseUp, false);
+        window.game = createGame();
       };
     </script>
   </body>
