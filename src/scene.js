@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { createCamera } from "./camera.js";
+import { createAssetInstance } from "./assets.js";
 
 console.log(THREE);
 
@@ -10,7 +11,6 @@ export const createScene = () => {
   scene.background = new THREE.Color(0x777777);
 
   const camera = createCamera(gameWindow);
-  //   scene.add(camera);
 
   const renderer = new THREE.WebGLRenderer();
   renderer.setSize(gameWindow.offsetWidth, gameWindow.offsetHeight);
@@ -26,16 +26,13 @@ export const createScene = () => {
     for (let x = 0; x < city.size; x++) {
       let column = [];
       for (let y = 0; y < city.size; y++) {
-        const boxGeometry = new THREE.BoxGeometry(1, 1, 1);
-        const boxMaterial = new THREE.MeshLambertMaterial({ color: 0xfff000 });
-        const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
-        boxMesh.position.set(x, -0.5, y);
+        const terrainId = city.data[x][y].terrainId;
+        const boxMesh = createAssetInstance(terrainId, x, y);
         scene.add(boxMesh);
         column.push(boxMesh);
       }
       terrain.push(column);
       buildings.push([...Array(city.size)]);
-      console.log(buildings);
     }
 
     setUpLights();
@@ -44,25 +41,20 @@ export const createScene = () => {
   function update(city) {
     for (let x = 0; x < city.size; x++) {
       for (let y = 0; y < city.size; y++) {
-        const tile = city.data[x][y];
-        if (tile.building && tile.building.startsWith("building")) {
-          const height = Number(tile.building.slice(-1));
-          const buildingGeometry = new THREE.BoxGeometry(1, height, 1);
-          const buildingMaterial = new THREE.MeshLambertMaterial({
-            color: 0xff0000,
-          });
-          const buildingMesh = new THREE.Mesh(
-            buildingGeometry,
-            buildingMaterial
-          );
-          buildingMesh.position.set(x, height / 2, y);
-          console.log(buildings[x][y]);
-          if (buildings[x][y]) {
-            scene.remove(buildings[x][y]);
-          }
+        const currentBuildingId = buildings[x][y]?.userData.id;
+        const newBuildingId = city.data[x][y].buildingId;
 
-          scene.add(buildingMesh);
-          buildings[x][y] = buildingMesh;
+        // If the player removes the building, remove it from the scene
+        if (!newBuildingId && currentBuildingId) {
+          scene.remove(buildings[x][y]);
+          buildings[x][y] = undefined;
+        }
+
+        // If the data model has changes, update the mesh
+        if (newBuildingId !== currentBuildingId) {
+          scene.remove(buildings[x][y]);
+          buildings[x][y] = createAssetInstance(newBuildingId, x, y);
+          scene.add(buildings[x][y]);
         }
       }
     }
